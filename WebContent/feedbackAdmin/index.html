@@ -1,0 +1,156 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Feedback Admin Portal</title>
+<style type="text/css" title="currentStyle">
+@import "css/demo_page.css";
+
+@import "css/demo_table.css";
+</style>
+<script type="text/javascript" language="javascript" src="js/jquery.js"></script>
+<script type="text/javascript" language="javascript"
+	src="js/jquery.dataTables.js"></script>
+<script type="text/javascript" charset="utf-8">
+
+        var currentBugType;
+        var oTable;
+        var dataChanged = "";
+        var initiaData = "";
+
+        $(document).ready(function () {
+            currentBugType = $('#bugTypeSelector').find(":selected").val();
+            initDataTable(false);
+        });
+
+        function initDataTable(destory) {
+            oTable = $('#example').dataTable({
+                "bProcessing":true,
+                "bDestroy":destory,
+                "bServerSide":true,
+                "bFilter":false,
+                "iDisplayLength":10,
+                "sServerMethod":"post",
+                "fnServerParams":beforeSendData,
+                "fnDrawCallback":onTableDrawn,
+                "sAjaxSource":"/DSS/feedbackAdmin.jsp" + "?bugType=" + currentBugType.toString(),
+                "aaSorting":[
+                    [5, 'desc']
+                ],
+                "aoColumns":[
+                    { "mData":"dbid", "sWidth":"10%" },
+                    { "mData":"monetid", "sWidth":"10%" },
+                    { "mData":"bugTitle", "sWidth":"14%" },
+                    { "mData":"bugText", "sWidth":"40%" },
+                    { "mData":"status", "sWidth":"10%", "mRender":renderStatus },
+                    { "mData":"checkDate", "sWidth":"8%" },
+                    { "mData":"reportDate", "sWidth":"8%" }
+                ]
+            });
+        }
+
+        function onTableDrawn(oSettings) {
+            initiaData = $('input', oTable.fnGetNodes()).serialize();
+        }
+
+        function beforeSendData(aoData) {
+            aoData.push({ "name":"dataChanged", "value":dataChanged });
+        }
+
+        function renderStatus(data, type, full) {
+            var checkedArray;
+            var statusInt = parseInt(data);
+            if (statusInt < 0) {
+                checkedArray = ["", "checked='checked'"];
+            } else if (statusInt == 1) {
+                checkedArray = ["checked='checked'", ""];
+            }
+            else {
+                checkedArray = ["", ""];
+            }
+            var name = "status" + full.dbid;
+
+            var radio1Html = "<input type='radio' value='1' name='" + name + "' " + checkedArray[0] + ">Passed</input><br />";
+            var radio2Html = "<input type='radio' value='-1' name='" + name + "' " + checkedArray[1] + ">Failed</input><br />";
+
+            return radio1Html + radio2Html;
+        }
+
+        function onSubmitChanges() {
+            var sData = $('input', oTable.fnGetNodes()).serialize();
+            var parts = sData.split("&");
+            dataChanged = "";
+            // Remove the unchanged data
+            for (var i = 0; i < parts.length; i++) {
+                if (initiaData.indexOf(parts[i]) < 0) {
+                    dataChanged = dataChanged + parts[i] + '&';
+                }
+            }
+            if (dataChanged.length > 1) {
+                initDataTable(true);
+            }
+        }
+
+        function onBugTypeClicked() {
+            var selectedBugType = $('#bugTypeSelector').find(":selected").val();
+            if (selectedBugType != currentBugType) {
+                currentBugType = selectedBugType;
+                initDataTable(true);
+            }
+        }
+    </script>
+<style>
+#bugTypeContainer {
+	width: 100%;
+	text-align: left;
+}
+
+#bugTypeSelector {
+	width: 140px;
+}
+</style>
+</head>
+<body id="dt_example">
+	<div id="container">
+		<div id="bugTypeContainer">
+			<select id="bugTypeSelector" onclick="onBugTypeClicked()">
+				<option value="Bug">Bug</option>
+				<option value="Advice" selected="selected">Advice</option>
+			</select>
+			<button id="submitBtn" onclick="onSubmitChanges()">Submit
+				Changes</button>
+		</div>
+		<br />
+
+		<div id="dynamic">
+			<table id="example" cellpadding="0" cellspacing="0" border="0"
+				class="display">
+				<thead>
+					<tr>
+						<th>Bug/Advice ID</th>
+						<th>Monet ID</th>
+						<th>Title</th>
+						<th>Content</th>
+						<th>Status</th>
+						<th>Check Date</th>
+						<th>Report Date</th>
+					</tr>
+				</thead>
+				<tbody>
+
+				</tbody>
+				<tfoot>
+					<tr>
+						<th>Bug/Advice ID</th>
+						<th>Monet ID</th>
+						<th>Title</th>
+						<th>Content</th>
+						<th>Status</th>
+						<th>Check Date</th>
+						<th>Report Date</th>
+					</tr>
+				</tfoot>
+			</table>
+		</div>
+	</div>
+</body>
+</html>
